@@ -299,31 +299,33 @@ func (c *Cache) Put(key string, value any, size int, ttl time.Duration) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	if entry, ok := c.entries[key]; ok {
+	entry, exists := c.entries[key]
+	if exists {
 		for entry.expiration.IsZero() {
-			entry.waitingForComputation += 1
+			entry.waitingForComputation++
 			c.cond.Wait()
-			entry.waitingForComputation -= 1
+			entry.waitingForComputation--
 		}
-
 		c.usedmemory -= entry.size
-		entry.expiration = now.Add(ttl)
-		entry.size = size
-		entry.value = value
-		c.usedmemory += entry.size
-
 		c.unlinkEntry(entry)
-		c.insertFront(entry)
-		return
+	} else {
+		entry = &cacheEntry{key: key}
+		c.entries[key] = entry
 	}
-
-	entry := &cacheEntry{
-		key:        key,
-		value:      value,
-		expiration: now.Add(ttl),
-	}
-	c.entries[key] = entry
+	entry.value = value
+	entry.size = size
+	entry.expiration = now.Add(ttl)
+	c.usedmemory += size
 	c.insertFront(entry)
+
+	// Apply the same budget and in-flight-reader rules as Get.
+	for candidate := c.tail; c.usedmemory > c.maxmemory && candidate != nil; {
+		previous := candidate.prev
+		if (candidate.size > 0 || now.After(candidate.expiration)) && candidate.waitingForComputation == 0 {
+			c.evictEntry(candidate)
+		}
+		candidate = previous
+	}
 }
 
 // Del removes the entry with the given key from the cache.
