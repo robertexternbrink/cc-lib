@@ -25,6 +25,10 @@ func CompressFile(fileIn string, fileOut string) error {
 	}
 	defer originalFile.Close()
 
+	if err := checkDistinctDestination(originalFile, fileOut); err != nil {
+		return err
+	}
+
 	gzippedFile, err := os.Create(fileOut)
 	if err != nil {
 		cclog.Errorf("CompressFile() error: %v", err)
@@ -75,6 +79,10 @@ func UncompressFile(fileIn string, fileOut string) error {
 		return err
 	}
 	defer gzippedFile.Close()
+
+	if err := checkDistinctDestination(gzippedFile, fileOut); err != nil {
+		return err
+	}
 
 	gzipReader, err := gzip.NewReader(gzippedFile)
 	if err != nil {
