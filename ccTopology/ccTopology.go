@@ -743,38 +743,73 @@ func (t *topology) GetHwthreadStringsOfSocket(socket uint) []string {
 	return out
 }
 
+func getMemoryDomainParent(o Object, memoryDomain uint, parent Object) (Object, bool) {
+	if o.Type == HWLOC_TYPE_NUMANODE && o.ID == memoryDomain {
+		return parent, true
+	}
+	if o.Type != HWLOC_TYPE_NUMANODE && o.Type != HWLOC_TYPE_MEMCACHE {
+		parent = o
+	}
+	for _, child := range o.Children {
+		if found, ok := getMemoryDomainParent(child, memoryDomain, parent); ok {
+			return found, true
+		}
+	}
+	for _, child := range o.MemoryChildren {
+		if found, ok := getMemoryDomainParent(child, memoryDomain, parent); ok {
+			return found, true
+		}
+	}
+	return Object{}, false
+}
+
 func (t *topology) GetHwthreadsOfMemoryDomain(memoryDomain uint) []uint {
 	out := make([]uint, 0)
 	for _, o := range t.objects {
-		if o.Type == HWLOC_TYPE_NUMANODE && o.ID == memoryDomain {
-			numHWthreads := C._hwloc_cpuset_size(o.HwlocObject.cpuset)
+		if o.Type != HWLOC_TYPE_NUMANODE || o.ID != memoryDomain {
+			continue
+		}
+		if o.HwlocObject != nil && o.HwlocObject.cpuset != nil {
 			for _, hwo := range t.objects {
 				if hwo.Type == HWLOC_TYPE_PU && C._hwloc_cpuset_isset(o.HwlocObject.cpuset, C.unsigned(hwo.ID)) == 1 {
 					out = append(out, hwo.ID)
 				}
-				if len(out) == int(numHWthreads) {
-					break
-				}
 			}
+			return out
 		}
+
+		// Remote JSON has no usable hwloc pointer. Explicit PU children are exact.
+		getChildrenIdsOfType(*o, HWLOC_TYPE_PU, &out)
+		if len(out) != 0 {
+			return out
+		}
+		parent, ok := getMemoryDomainParent(t.root, memoryDomain, t.root)
+		if !ok {
+			return out
+		}
+		// Without cpusets, multiple domains at one CPU ancestor are ambiguous.
+		// Preserve the existing slice API and report unavailable membership as empty.
+		pending := []Object{parent}
+		for len(pending) != 0 {
+			last := len(pending) - 1
+			child := pending[last]
+			pending = pending[:last]
+			if child.Type == HWLOC_TYPE_NUMANODE && child.ID != memoryDomain {
+				return out
+			}
+			pending = append(pending, child.Children...)
+			pending = append(pending, child.MemoryChildren...)
+		}
+		getChildrenIdsOfType(parent, HWLOC_TYPE_PU, &out)
+		return out
 	}
 	return out
 }
 
 func (t *topology) GetHwthreadStringsOfMemoryDomain(memoryDomain uint) []string {
 	out := make([]string, 0)
-	for _, o := range t.objects {
-		if o.Type == HWLOC_TYPE_NUMANODE && o.ID == memoryDomain {
-			numHWthreads := C._hwloc_cpuset_size(o.HwlocObject.cpuset)
-			for _, hwo := range t.objects {
-				if hwo.Type == HWLOC_TYPE_PU && C._hwloc_cpuset_isset(o.HwlocObject.cpuset, C.unsigned(hwo.ID)) == 1 {
-					out = append(out, fmt.Sprintf("%d", hwo.ID))
-				}
-				if len(out) == int(numHWthreads) {
-					break
-				}
-			}
-		}
+	for _, id := range t.GetHwthreadsOfMemoryDomain(memoryDomain) {
+		out = append(out, fmt.Sprintf("%d", id))
 	}
 	return out
 }
