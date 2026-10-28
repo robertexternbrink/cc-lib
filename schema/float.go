@@ -63,6 +63,9 @@ func ConvertToFloat(input float64) Float {
 // NaN values are serialized as JSON null. Regular float values are
 // formatted with 2 decimal places using fixed-point notation.
 func (f Float) MarshalJSON() ([]byte, error) {
+	if math.IsInf(float64(f), 0) {
+		return nil, errors.New("cannot encode infinite Float as JSON")
+	}
 	if f.IsNaN() {
 		return nullAsBytes, nil
 	}
@@ -101,9 +104,9 @@ func (f *Float) UnmarshalGQL(v any) error {
 }
 
 // MarshalGQL implements the graphql.Marshaler interface.
-// NaN will be serialized to `null`.
+// Non-finite values are serialized to `null` because this nullable scalar writer cannot return an error.
 func (f Float) MarshalGQL(w io.Writer) {
-	if f.IsNaN() {
+	if f.IsNaN() || math.IsInf(float64(f), 0) {
 		w.Write(nullAsBytes)
 	} else {
 		w.Write(strconv.AppendFloat(make([]byte, 0, 10), float64(f), 'f', 2, 64))
@@ -115,6 +118,11 @@ func (f Float) MarshalGQL(w io.Writer) {
 // encoding/json. NaN data points are serialized as null. Only used via
 // REST-API, not via GraphQL.
 func (s *Series) MarshalJSON() ([]byte, error) {
+	for _, value := range []float64{s.Statistics.Min, s.Statistics.Avg, s.Statistics.Max} {
+		if math.IsNaN(value) || math.IsInf(value, 0) {
+			return nil, errors.New("cannot encode non-finite series statistics as JSON")
+		}
+	}
 	buf := make([]byte, 0, 512+len(s.Data)*8)
 	buf = append(buf, `{"hostname":`...)
 	hostname, _ := json.Marshal(s.Hostname) // Marshaling a string cannot fail.
@@ -137,6 +145,9 @@ func (s *Series) MarshalJSON() ([]byte, error) {
 			buf = append(buf, ',')
 		}
 
+		if math.IsInf(float64(s.Data[i]), 0) {
+			return nil, errors.New("cannot encode infinite series data as JSON")
+		}
 		if s.Data[i].IsNaN() {
 			buf = append(buf, `null`...)
 		} else {
@@ -181,6 +192,9 @@ func (fa FloatArray) MarshalJSON() ([]byte, error) {
 			buf = append(buf, ',')
 		}
 
+		if math.IsInf(float64(fa[i]), 0) {
+			return nil, errors.New("cannot encode infinite FloatArray value as JSON")
+		}
 		if fa[i].IsNaN() {
 			buf = append(buf, `null`...)
 		} else {
