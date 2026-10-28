@@ -169,6 +169,9 @@ func GetPrefixStringPrefixStringFactor(in string, out string) func(value any) an
 // the most common case where you have some input unit and want to convert it to the same unit but with
 // a different prefix. The returned unit represents the value after conversation.
 func GetUnitPrefixFactor(in Unit, out Prefix) (func(value any) any, Unit) {
+	if !in.Valid() || out == InvalidPrefix {
+		return nil, INVALID_UNIT
+	}
 	outUnit := NewUnit(in.Short())
 	if outUnit.Valid() {
 		outUnit.SetPrefix(out)
@@ -196,6 +199,9 @@ func GetUnitStringPrefixStringFactor(in string, out string) (func(value any) any
 // It is basically a wrapper for GetPrefixPrefixFactor with some special cases for temperature
 // conversion between Fahrenheit and Celsius.
 func GetUnitUnitFactor(in Unit, out Unit) (func(value any) any, error) {
+	if !in.Valid() || !out.Valid() {
+		return nil, fmt.Errorf("invalid input or output unit")
+	}
 	if in.GetMeasure() == TemperatureC && out.GetMeasure() == TemperatureF {
 		return convertTempC2TempF, nil
 	} else if in.GetMeasure() == TemperatureF && out.GetMeasure() == TemperatureC {
