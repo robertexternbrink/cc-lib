@@ -32,3 +32,20 @@ func TestStatistics_ThreeSeriesPercentilesDoNotPanic(t *testing.T) {
 		t.Fatal("absent statistics unexpectedly created for three series")
 	}
 }
+
+func TestStatistics_PercentilesOmitMissing(t *testing.T) {
+	jm := JobMetric{}
+	for _, value := range []Float{NaN, NaN, 10, 20, 30} {
+		jm.Series = append(jm.Series, Series{Data: []Float{value, NaN}})
+	}
+	if !jm.AddPercentiles([]int{50}) {
+		t.Fatal("percentiles unavailable")
+	}
+	values := jm.StatisticsSeries.Percentiles[50]
+	if values[0] != 20 {
+		t.Errorf("P50=%v, want20", values[0])
+	}
+	if !values[1].IsNaN() {
+		t.Errorf("missing-only percentile=%v", values[1])
+	}
+}

@@ -480,7 +480,7 @@ func (jm *JobMetric) AddPercentiles(ps []int) bool {
 	for i := range n {
 		vals := make([]float64, 0, len(jm.Series))
 		for _, series := range jm.Series {
-			if i < len(series.Data) {
+			if i < len(series.Data) && !series.Data[i].IsNaN() {
 				vals = append(vals, float64(series.Data[i]))
 			}
 		}
@@ -501,6 +501,10 @@ func (jm *JobMetric) AddPercentiles(ps []int) bool {
 		percentiles := make([]Float, n)
 		for i := range n {
 			sorted := data[i]
+			if len(sorted) == 0 {
+				percentiles[i] = NaN
+				continue
+			}
 			percentiles[i] = Float(sorted[(len(sorted)*p)/100])
 		}
 
