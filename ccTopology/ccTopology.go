@@ -13,6 +13,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 /*
@@ -583,8 +584,11 @@ func (t *topology) init() error {
 }
 
 var _ccTopology_local_topo *topology = nil
+var localTopologyMu sync.Mutex
 
 func LocalTopology() (Topology, error) {
+	localTopologyMu.Lock()
+	defer localTopologyMu.Unlock()
 	if _ccTopology_local_topo == nil {
 		t := new(topology)
 		err := t.init()
