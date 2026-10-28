@@ -28,7 +28,11 @@ type Unit interface {
 	SetPrefix(p Prefix)
 }
 
-var INVALID_UNIT = NewUnit("foobar")
+var INVALID_UNIT Unit = &unit{
+	prefix:     InvalidPrefix,
+	measure:    InvalidMeasure,
+	divMeasure: InvalidMeasure,
+}
 
 // Valid checks whether a unit is a valid unit. A unit is valid if it has at least a prefix and a measure. The unit denominator is optional.
 func (u *unit) Valid() bool {
