@@ -198,7 +198,7 @@ func LargestTriangleThreeBucket(data []schema.Float, oldFrequency int64, newFreq
 	if err != nil {
 		return nil, 0, err
 	}
-	if newDataLength == -1 {
+	if newDataLength < 2 {
 		return data, oldFrequency, nil
 	}
 
