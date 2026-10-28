@@ -23,3 +23,25 @@ func TestLTTB_SingleTargetUsesConsistentResolution(t *testing.T) {
 		t.Fatalf("inconsistent output: len=%d step=%d", len(got), step)
 	}
 }
+
+func TestLTTB_PreservesPenultimatePeak(t *testing.T) {
+	for _, length := range []int{1000, 1200, 2000} {
+		for _, step := range []int64{2, 5, 10} {
+			data := make([]schema.Float, length)
+			data[length-2] = 100
+			got, _, err := LargestTriangleThreeBucket(data, 1, step)
+			if err != nil {
+				t.Fatal(err)
+			}
+			found := false
+			for _, v := range got {
+				if v == 100 {
+					found = true
+				}
+			}
+			if !found {
+				t.Errorf("penultimate peak lost: length=%d step=%d", length, step)
+			}
+		}
+	}
+}

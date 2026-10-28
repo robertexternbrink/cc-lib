@@ -226,6 +226,13 @@ func LargestTriangleThreeBucket(data []schema.Float, oldFrequency int64, newFreq
 			bucketHigh = len(data) - 2
 		}
 
+		// The final candidate bucket includes the last interior point;
+		// its lookahead is the separately retained endpoint.
+		if i == newDataLength-3 {
+			bucketMiddle = len(data) - 1
+			bucketHigh = len(data) - 1
+		}
+
 		// Calculate average point for next bucket (point c in triangle)
 		avgPointX, avgPointY := calculateAverageDataPoint(data[bucketMiddle:bucketHigh+1], int64(bucketMiddle))
 
