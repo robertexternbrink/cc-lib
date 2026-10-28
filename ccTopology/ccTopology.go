@@ -746,7 +746,7 @@ func (t *topology) GetHwthreadStringsOfSocket(socket uint) []string {
 func (t *topology) GetHwthreadsOfMemoryDomain(memoryDomain uint) []uint {
 	out := make([]uint, 0)
 	for _, o := range t.objects {
-		if o.Type == HWLOC_TYPE_NUMANODE {
+		if o.Type == HWLOC_TYPE_NUMANODE && o.ID == memoryDomain {
 			numHWthreads := C._hwloc_cpuset_size(o.HwlocObject.cpuset)
 			for _, hwo := range t.objects {
 				if hwo.Type == HWLOC_TYPE_PU && C._hwloc_cpuset_isset(o.HwlocObject.cpuset, C.unsigned(hwo.ID)) == 1 {
@@ -764,7 +764,7 @@ func (t *topology) GetHwthreadsOfMemoryDomain(memoryDomain uint) []uint {
 func (t *topology) GetHwthreadStringsOfMemoryDomain(memoryDomain uint) []string {
 	out := make([]string, 0)
 	for _, o := range t.objects {
-		if o.Type == HWLOC_TYPE_NUMANODE {
+		if o.Type == HWLOC_TYPE_NUMANODE && o.ID == memoryDomain {
 			numHWthreads := C._hwloc_cpuset_size(o.HwlocObject.cpuset)
 			for _, hwo := range t.objects {
 				if hwo.Type == HWLOC_TYPE_PU && C._hwloc_cpuset_isset(o.HwlocObject.cpuset, C.unsigned(hwo.ID)) == 1 {
