@@ -106,7 +106,11 @@ hwloc_obj_t _hwloc_get_child(hwloc_obj_t obj, unsigned int offset) {
 hwloc_obj_t _hwloc_get_memory_child(hwloc_obj_t obj, unsigned int offset) {
 	if (offset < obj->memory_arity)
 	{
-		return &obj->memory_first_child[offset];
+		hwloc_obj_t child = obj->memory_first_child;
+		while (child && offset--) {
+			child = child->next_sibling;
+		}
+		return child;
 	}
 	return NULL;
 }
@@ -114,7 +118,11 @@ hwloc_obj_t _hwloc_get_memory_child(hwloc_obj_t obj, unsigned int offset) {
 hwloc_obj_t _hwloc_get_io_child(hwloc_obj_t obj, unsigned int offset) {
 	if (offset < obj->io_arity)
 	{
-		return &obj->io_first_child[offset];
+		hwloc_obj_t child = obj->io_first_child;
+		while (child && offset--) {
+			child = child->next_sibling;
+		}
+		return child;
 	}
 	return NULL;
 }
