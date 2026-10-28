@@ -72,3 +72,18 @@ func TestSchemaContract_ScopeMapsRejectScalars(t *testing.T) {
 		t.Fatal("nullable map contract changed:", err)
 	}
 }
+
+func TestSchemaContract_ConstructorStatisticsAreValid(t *testing.T) {
+	schema := schemaContractCompile(t, "job-metric-data.schema.json")
+	metric := JobMetric{Unit: Unit{Base: "B"}, Timestep: 1}
+	for i := 0; i < 4; i++ {
+		metric.Series = append(metric.Series, Series{Hostname: "node001", Data: []Float{1, 2}, Statistics: MetricStatistics{Min: 1, Avg: 1.5, Max: 2}})
+	}
+	metric.AddStatisticsSeries()
+	if metric.StatisticsSeries == nil {
+		t.Fatal("fixture failed to construct statistics")
+	}
+	if err := schema.Validate(schemaContractJSON(t, metric)); err != nil {
+		t.Fatalf("constructor output rejected: %v", err)
+	}
+}
