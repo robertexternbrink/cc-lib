@@ -202,9 +202,9 @@ func GetUnitUnitFactor(in Unit, out Unit) (func(value any) any, error) {
 	if !in.Valid() || !out.Valid() {
 		return nil, fmt.Errorf("invalid input or output unit")
 	}
-	if in.GetMeasure() == TemperatureC && out.GetMeasure() == TemperatureF {
+	if in.GetUnitDenominator() == out.GetUnitDenominator() && in.GetMeasure() == TemperatureC && out.GetMeasure() == TemperatureF {
 		return convertTempC2TempF, nil
-	} else if in.GetMeasure() == TemperatureF && out.GetMeasure() == TemperatureC {
+	} else if in.GetUnitDenominator() == out.GetUnitDenominator() && in.GetMeasure() == TemperatureF && out.GetMeasure() == TemperatureC {
 		return convertTempF2TempC, nil
 	} else if in.GetMeasure() != out.GetMeasure() || in.GetUnitDenominator() != out.GetUnitDenominator() {
 		return func(value any) any { return 1.0 }, fmt.Errorf("invalid measures in in and out Unit")

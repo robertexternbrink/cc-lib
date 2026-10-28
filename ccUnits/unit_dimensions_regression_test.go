@@ -44,6 +44,38 @@ func TestUnitDenominatorValidation(t *testing.T) {
 	}
 }
 
+func TestUnitTemperatureDenominatorCompatibility(t *testing.T) {
+	for _, tc := range []struct{ in, out string }{
+		{"degC/s", "degF"}, {"degC", "degF/s"}, {"degC/s", "degF/J"},
+		{"degF/s", "degC"}, {"degF", "degC/s"}, {"degF/J", "degC/s"},
+		{"degC/s", "degC"}, {"degF/s", "degF"}, {"KB/s", "MB/J"},
+	} {
+		in, out := NewUnit(tc.in), NewUnit(tc.out)
+		if !in.Valid() || !out.Valid() {
+			t.Fatalf("invalid fixture %q -> %q", tc.in, tc.out)
+		}
+		if _, err := GetUnitUnitFactor(in, out); err == nil {
+			t.Errorf("incompatible denominators accepted: %q -> %q", tc.in, tc.out)
+		}
+	}
+	for _, tc := range []struct {
+		in, out     string
+		value, want float64
+	}{
+		{"degC", "degF", 0, 32}, {"degC", "degF", 100, 212},
+		{"degF", "degC", 32, 0}, {"degF", "degC", 212, 100},
+	} {
+		convert, err := GetUnitUnitFactor(NewUnit(tc.in), NewUnit(tc.out))
+		if err != nil || convert == nil {
+			t.Fatalf("valid temperature converter %q -> %q: %v", tc.in, tc.out, err)
+		}
+		got, ok := convert(tc.value).(float64)
+		if !ok || math.IsNaN(got) || math.IsInf(got, 0) || math.Abs(got-tc.want) > 1e-12 {
+			t.Errorf("temperature %q -> %q: got=%v want=%v", tc.in, tc.out, got, tc.want)
+		}
+	}
+}
+
 func TestUnitDimensionCompatibility(t *testing.T) {
 	for _, tc := range []struct {
 		in, out     string
