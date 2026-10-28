@@ -139,7 +139,7 @@ func (s *Series) MarshalJSON() ([]byte, error) {
 		if s.Data[i].IsNaN() {
 			buf = append(buf, `null`...)
 		} else {
-			buf = strconv.AppendFloat(buf, float64(s.Data[i]), 'f', 2, 32)
+			buf = strconv.AppendFloat(buf, float64(s.Data[i]), 'f', 2, 64)
 		}
 	}
 	buf = append(buf, ']', '}')
