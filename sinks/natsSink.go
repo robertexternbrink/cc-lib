@@ -88,7 +88,7 @@ func (s *NatsSink) Write(m lp.CCMessage) error {
 		s.encoderLock.Lock()
 
 		// Add message to encoder
-		err = EncoderAdd(&s.encoder, m)
+		err = EncoderAdd(&s.encoder, msg)
 
 		// Unlock encoder usage
 		s.encoderLock.Unlock()
