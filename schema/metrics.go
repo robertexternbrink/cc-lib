@@ -276,7 +276,7 @@ func (jm *JobMetric) AddStatisticsSeries() {
 	for ; i < m; i++ {
 		seriesCount := len(jm.Series)
 		// ssum := 0.0
-		smin, smed, smax := math.MaxFloat32, make([]float64, seriesCount), -math.MaxFloat32
+		smin, smed, smax := math.MaxFloat32, make([]float64, 0, seriesCount), -math.MaxFloat32
 		notnan := 0
 		for j := range seriesCount {
 			x := float64(jm.Series[j].Data[i])
@@ -286,7 +286,7 @@ func (jm *JobMetric) AddStatisticsSeries() {
 
 			notnan += 1
 			// ssum += x
-			smed[j] = x
+			smed = append(smed, x)
 			smin = math.Min(smin, x)
 			smax = math.Max(smax, x)
 		}
