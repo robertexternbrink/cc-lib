@@ -233,6 +233,9 @@ func NewUnit(unitStr string) Unit {
 		switch m {
 		// Special case for 'm' as prefix for Bytes and some others as thers is no unit like MilliBytes
 		case Bytes, Flops, Packets, Events, Cycles, Requests:
+			if pre == Micro || pre == Nano {
+				return u
+			}
 			if pre == Milli {
 				pre = Mega
 			}
