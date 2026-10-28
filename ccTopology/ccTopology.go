@@ -323,6 +323,14 @@ func (t *topology) MarshalJSON() ([]byte, error) {
 }
 
 func addObject(o Object, objects *[]*Object) {
+	// Older topology JSON may contain a NUMA node in both child lists.
+	if o.Type == HWLOC_TYPE_NUMANODE {
+		for _, existing := range *objects {
+			if existing.Type == HWLOC_TYPE_NUMANODE && existing.ID == o.ID {
+				return
+			}
+		}
+	}
 	*objects = append(*objects, &o)
 	for _, c := range o.Children {
 		addObject(c, objects)
@@ -475,16 +483,8 @@ func (t *topology) additionalMachineOps(hwtopo C.hwloc_topology_t) []Object {
 
 func (t *topology) additionalPackageOps(hwtopo C.hwloc_topology_t, packageObj Object) []Object {
 	out := make([]Object, 0)
-	nbobj := C.hwloc_get_nbobjs_by_depth(hwtopo, C.HWLOC_TYPE_DEPTH_NUMANODE)
-	for j := range int(nbobj) {
-		hwobj := C.hwloc_get_obj_by_depth(hwtopo, C.HWLOC_TYPE_DEPTH_NUMANODE, C.uint(j))
-		if HWLOC_OBJ_TYPE(hwobj.parent._type) == packageObj.Type &&
-			int64(hwobj.parent.os_index) == int64(packageObj.ID) &&
-			int(hwobj.parent.logical_index) == int(packageObj.LogicalIndex) {
-			out = append(out, t.traverseObject(hwtopo, hwobj))
-		}
-	}
-	nbobj = C.hwloc_get_nbobjs_by_depth(hwtopo, C.HWLOC_TYPE_DEPTH_OS_DEVICE)
+	// NUMA nodes are already traversed through MemoryChildren.
+	nbobj := C.hwloc_get_nbobjs_by_depth(hwtopo, C.HWLOC_TYPE_DEPTH_OS_DEVICE)
 	for j := range int(nbobj) {
 		hwobj := C.hwloc_get_obj_by_depth(hwtopo, C.HWLOC_TYPE_DEPTH_OS_DEVICE, C.uint(j))
 		if HWLOC_OBJ_TYPE(hwobj.parent._type) == packageObj.Type &&
