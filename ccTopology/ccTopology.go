@@ -839,12 +839,18 @@ type CpuInformation struct {
 }
 
 func (t *topology) CpuInfo() CpuInformation {
+	numHWthreads := len(t.GetHwthreads())
+	numCores := len(t.GetCores())
+	smtWidth := 0
+	if numCores != 0 {
+		smtWidth = numHWthreads / numCores
+	}
 	return CpuInformation{
-		NumHWthreads:   len(t.GetHwthreads()),
-		SMTWidth:       len(t.GetHwthreads()) / len(t.GetCores()),
+		NumHWthreads:   numHWthreads,
+		SMTWidth:       smtWidth,
 		NumSockets:     len(t.GetSockets()),
 		NumDies:        len(t.GetDies()),
-		NumCores:       len(t.GetCores()),
+		NumCores:       numCores,
 		NumNumaDomains: len(t.GetMemoryDomains()),
 	}
 }
