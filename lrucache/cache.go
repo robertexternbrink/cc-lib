@@ -190,6 +190,7 @@ func (c *Cache) Get(key string, computeValue ComputeValue) any {
 	now := time.Now()
 
 	c.mutex.Lock()
+lookup:
 	if entry, ok := c.entries[key]; ok {
 		// The expiration not being set is what shows us that
 		// the computation of that value is still ongoing.
@@ -197,6 +198,11 @@ func (c *Cache) Get(key string, computeValue ComputeValue) any {
 			entry.waitingForComputation += 1
 			c.cond.Wait()
 			entry.waitingForComputation -= 1
+		}
+		// A failed computation removes its entry before waking waiters.
+		// Retry against the map instead of using the abandoned entry.
+		if c.entries[key] != entry {
+			goto lookup
 		}
 
 		if now.After(entry.expiration) {
@@ -236,6 +242,9 @@ func (c *Cache) Get(key string, computeValue ComputeValue) any {
 			delete(c.entries, key)
 			entry.expiration = now
 			entry.waitingForComputation -= 1
+			if entry.waitingForComputation > 0 {
+				c.cond.Broadcast()
+			}
 		}
 		c.mutex.Unlock()
 	}()
@@ -299,12 +308,16 @@ func (c *Cache) Put(key string, value any, size int, ttl time.Duration) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
+lookup:
 	entry, exists := c.entries[key]
 	if exists {
 		for entry.expiration.IsZero() {
 			entry.waitingForComputation++
 			c.cond.Wait()
 			entry.waitingForComputation--
+		}
+		if c.entries[key] != entry {
+			goto lookup
 		}
 		c.usedmemory -= entry.size
 		c.unlinkEntry(entry)
