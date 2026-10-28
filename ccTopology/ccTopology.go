@@ -336,11 +336,15 @@ func addObject(o Object, objects *[]*Object) {
 }
 
 func (t *topology) UnmarshalJSON(in []byte) error {
-	err := json.Unmarshal(in, &t.root)
+	var root Object
+	err := json.Unmarshal(in, &root)
 	if err != nil {
 		return err
 	}
-	addObject(t.root, &t.objects)
+	objects := make([]*Object, 0)
+	addObject(root, &objects)
+	t.root = root
+	t.objects = objects
 	return nil
 }
 
