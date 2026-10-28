@@ -461,7 +461,7 @@ func (jm *JobMetric) AddPercentiles(ps []int) bool {
 		jm.AddStatisticsSeries()
 	}
 
-	if len(jm.Series) < 3 {
+	if len(jm.Series) < 3 || jm.StatisticsSeries == nil {
 		return false
 	}
 
