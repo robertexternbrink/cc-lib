@@ -5,6 +5,9 @@
 package ccunits
 
 import (
+	"math"
+	"reflect"
+	"strconv"
 	"testing"
 )
 
@@ -88,5 +91,46 @@ func TestNewUnit_MicroNanoPrefixes(t *testing.T) {
 		if !NewUnit(s).Valid() {
 			t.Errorf("old prefix alias %q became invalid", s)
 		}
+	}
+}
+
+func TestPrefixConverter_IntegerIdentity(t *testing.T) {
+	values := []any{
+		int64(9007199254740993), int64(-9007199254740993), uint64(9007199254740993),
+		int64(math.MaxInt64), int64(math.MinInt64), uint64(math.MaxUint64),
+		int(7), int32(-7), uint(7), uint32(7), float32(1.25), float64(-1.25),
+	}
+	if strconv.IntSize == 64 {
+		largeSigned := int64(9007199254740993)
+		largeUnsigned := uint64(9007199254740993)
+		values = append(values, int(largeSigned), uint(largeUnsigned))
+	}
+	for _, p := range []Prefix{Base, Kilo, Kibi, Mega, Milli, Micro, Nano} {
+		convert := GetPrefixPrefixFactor(p, p)
+		for _, value := range values {
+			if got := convert(value); !reflect.DeepEqual(got, value) {
+				t.Errorf("identity at prefix %g: %T(%v) -> %T(%v)", p, value, value, got, got)
+			}
+		}
+	}
+	// Non-identity type preservation and existing truncation remain unchanged.
+	convert := GetPrefixPrefixFactor(Kilo, Base)
+	for _, value := range []any{int(2), int32(2), int64(2), uint(2), uint32(2), uint64(2), float32(2), float64(2)} {
+		got := convert(value)
+		if reflect.TypeOf(got) != reflect.TypeOf(value) || reflect.ValueOf(got).Convert(reflect.TypeOf(float64(0))).Float() != 2000 {
+			t.Errorf("non-identity conversion changed for %T", value)
+		}
+	}
+	if got := GetPrefixPrefixFactor(Base, Kilo)(int64(1500)); got != int64(1) {
+		t.Errorf("integer truncation changed: %v", got)
+	}
+	for _, value := range []any{"unchanged", int8(7), uint16(7), nil} {
+		if got := convert(value); !reflect.DeepEqual(got, value) {
+			t.Errorf("unsupported value changed: %T", value)
+		}
+	}
+	// An invalid prefix pair still follows the existing (unfixed) NaN behavior.
+	if got := GetPrefixPrefixFactor(InvalidPrefix, InvalidPrefix)(float64(1)).(float64); !math.IsNaN(got) {
+		t.Errorf("unrelated invalid-prefix behavior changed: %g", got)
 	}
 }

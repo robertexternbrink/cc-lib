@@ -81,6 +81,9 @@ func (u *unit) GetUnitDenominator() Measure {
 func GetPrefixPrefixFactor(in Prefix, out Prefix) func(value any) any {
 	factor := float64(in) / float64(out)
 	conv := func(value any) any {
+		if factor == 1 {
+			return value
+		}
 		switch v := value.(type) {
 		case float64:
 			return v * factor
