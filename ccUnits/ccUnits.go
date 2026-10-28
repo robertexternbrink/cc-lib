@@ -224,6 +224,9 @@ func NewUnit(unitStr string) Unit {
 	if len(matches) > 2 {
 		pre := NewPrefix(matches[1])
 		measures := strings.Split(matches[2], "/")
+		if len(measures) > 2 {
+			return INVALID_UNIT
+		}
 		m := NewMeasure(measures[0])
 		// Special case for prefix 'p' or 'P' (Peta) and measures starting with 'p' or 'P'
 		// like 'packets' or 'percent'. Same for 'e' or 'E' (Exa) for measures starting with
@@ -241,6 +244,9 @@ func NewUnit(unitStr string) Unit {
 		div := InvalidMeasure
 		if len(measures) > 1 {
 			div = NewMeasure(measures[1])
+			if div == InvalidMeasure {
+				return INVALID_UNIT
+			}
 		}
 
 		switch m {
