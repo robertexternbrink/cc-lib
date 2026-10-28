@@ -262,7 +262,13 @@
               "type": "number",
               "minimum": 0
             },
-            "minItems": 1
+            "minItems": 1,
+            "items": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
           }
         },
         "required": [

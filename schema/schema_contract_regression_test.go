@@ -87,3 +87,19 @@ func TestSchemaContract_ConstructorStatisticsAreValid(t *testing.T) {
 		t.Fatalf("constructor output rejected: %v", err)
 	}
 }
+
+func TestSchemaContract_EachDataSampleHasNumericType(t *testing.T) {
+	schema := schemaContractCompile(t, "job-metric-data.schema.json")
+	for _, values := range []any{[]any{1, "wrong", true, map[string]any{}}, []any{1, true}} {
+		metric := schemaContractMetric()
+		metric["series"].([]any)[0].(map[string]any)["data"] = values
+		if err := schema.Validate(schemaContractJSON(t, metric)); err == nil {
+			t.Errorf("non-numeric data accepted: %#v", values)
+		}
+	}
+	metric := schemaContractMetric()
+	metric["series"].([]any)[0].(map[string]any)["data"] = []any{1, nil, 3}
+	if err := schema.Validate(schemaContractJSON(t, metric)); err != nil {
+		t.Fatal("missing-sample control rejected:", err)
+	}
+}
