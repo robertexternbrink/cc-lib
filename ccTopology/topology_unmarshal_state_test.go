@@ -6,8 +6,8 @@
 package ccTopology
 
 import (
-"reflect"
-"testing"
+	"reflect"
+	"testing"
 )
 
 func TestTopologyUnmarshalReplacesState(t *testing.T) {

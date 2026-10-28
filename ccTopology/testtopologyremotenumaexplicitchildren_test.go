@@ -6,7 +6,7 @@
 package ccTopology
 
 import (
-"testing"
+	"testing"
 )
 
 func TestTopologyRemoteNUMAExplicitChildren(t *testing.T) {

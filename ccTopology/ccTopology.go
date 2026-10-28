@@ -569,6 +569,7 @@ func (t *topology) init() error {
 	C.hwloc_topology_set_all_types_filter(hwtopo, C.HWLOC_TYPE_FILTER_KEEP_ALL)
 	ret = C.hwloc_topology_load(hwtopo)
 	if ret != 0 {
+		C.hwloc_topology_destroy(hwtopo)
 		return fmt.Errorf("hwloc_topology_load returned %d", ret)
 	}
 

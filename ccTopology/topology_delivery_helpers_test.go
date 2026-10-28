@@ -6,10 +6,10 @@
 package ccTopology
 
 import (
-"encoding/json"
-"reflect"
-"strconv"
-"testing"
+	"encoding/json"
+	"reflect"
+	"strconv"
+	"testing"
 )
 
 func topologyRegressionJSON(t *testing.T, root Object) json.RawMessage {

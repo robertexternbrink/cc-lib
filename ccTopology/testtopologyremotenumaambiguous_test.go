@@ -6,7 +6,7 @@
 package ccTopology
 
 import (
-"testing"
+	"testing"
 )
 
 func TestTopologyRemoteNUMAAmbiguous(t *testing.T) {

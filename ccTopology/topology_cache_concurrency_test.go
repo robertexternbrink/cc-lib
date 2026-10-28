@@ -6,8 +6,8 @@
 package ccTopology
 
 import (
-"sync"
-"testing"
+	"sync"
+	"testing"
 )
 
 func TestTopologyLocalCacheConcurrent(t *testing.T) {

@@ -6,7 +6,7 @@
 package ccTopology
 
 import (
-"testing"
+	"testing"
 )
 
 func TestTopologyCpuInfoMissingCores(t *testing.T) {
