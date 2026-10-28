@@ -27,3 +27,27 @@ func TestSeriesJSON_PreservesFloat64Data(t *testing.T) {
 		}
 	}
 }
+
+func TestSeriesJSON_QuotesStringFields(t *testing.T) {
+	for _, value := range []string{"gpu\\0", "quote\"id", "line\nnext", "control\x00\a\v", string([]byte{0xff})} {
+		series := Series{Hostname: value, ID: &value, Data: []Float{1}}
+		encoded, err := json.Marshal(&series)
+		if err != nil {
+			t.Errorf("string serialization failed: %v", err)
+			continue
+		}
+		var got Series
+		if err := json.Unmarshal(encoded, &got); err != nil {
+			t.Fatal(err)
+		}
+		// encoding/json defines replacement of invalid UTF-8; compare its string oracle.
+		reference, _ := json.Marshal(value)
+		var want string
+		if err := json.Unmarshal(reference, &want); err != nil {
+			t.Fatal(err)
+		}
+		if got.Hostname != want || got.ID == nil || *got.ID != want {
+			t.Errorf("string identity lost: host=%q ID=%v want=%q", got.Hostname, got.ID, want)
+		}
+	}
+}

@@ -6,6 +6,7 @@
 package schema
 
 import (
+	"encoding/json"
 	"errors"
 	"io"
 	"math"
@@ -115,13 +116,13 @@ func (f Float) MarshalGQL(w io.Writer) {
 // REST-API, not via GraphQL.
 func (s *Series) MarshalJSON() ([]byte, error) {
 	buf := make([]byte, 0, 512+len(s.Data)*8)
-	buf = append(buf, `{"hostname":"`...)
-	buf = append(buf, s.Hostname...)
-	buf = append(buf, '"')
+	buf = append(buf, `{"hostname":`...)
+	hostname, _ := json.Marshal(s.Hostname) // Marshaling a string cannot fail.
+	buf = append(buf, hostname...)
 	if s.ID != nil {
-		buf = append(buf, `,"id":"`...)
-		buf = append(buf, *s.ID...)
-		buf = append(buf, '"')
+		buf = append(buf, `,"id":`...)
+		id, _ := json.Marshal(*s.ID)
+		buf = append(buf, id...)
 	}
 	buf = append(buf, `,"statistics":{"min":`...)
 	buf = strconv.AppendFloat(buf, s.Statistics.Min, 'f', 2, 64)
