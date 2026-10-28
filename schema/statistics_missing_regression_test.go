@@ -49,3 +49,12 @@ func TestStatistics_PercentilesOmitMissing(t *testing.T) {
 		t.Errorf("missing-only percentile=%v", values[1])
 	}
 }
+
+func TestStatistics_UnevenSeriesRetainAvailableSamples(t *testing.T) {
+	jm := JobMetric{Series: []Series{{Data: []Float{1}}, {Data: []Float{10, 20}}, {Data: []Float{20, 30}}, {Data: []Float{30, 40}}}}
+	jm.AddStatisticsSeries()
+	stats := jm.StatisticsSeries
+	if len(stats.Median) != 2 || stats.Median[1] != 30 || stats.Min[1] != 20 || stats.Max[1] != 40 {
+		t.Fatalf("available tail samples discarded: %+v", stats)
+	}
+}

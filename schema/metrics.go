@@ -273,12 +273,15 @@ func (jm *JobMetric) AddStatisticsSeries() {
 	// mean := make([]Float, n)
 	min, median, max := make([]Float, n), make([]Float, n), make([]Float, n)
 	i := 0
-	for ; i < m; i++ {
+	for ; i < n; i++ {
 		seriesCount := len(jm.Series)
 		// ssum := 0.0
 		smin, smed, smax := math.MaxFloat32, make([]float64, 0, seriesCount), -math.MaxFloat32
 		notnan := 0
 		for j := range seriesCount {
+			if i >= len(jm.Series[j].Data) {
+				continue
+			}
 			x := float64(jm.Series[j].Data[i])
 			if math.IsNaN(x) {
 				continue
