@@ -40,7 +40,22 @@ func CompressFile(fileIn string, fileOut string) error {
 		cclog.Errorf("CompressFile() error: %v", err)
 		return err
 	}
-	gzipWriter.Flush()
+	if err := gzipWriter.Flush(); err != nil {
+		cclog.Errorf("CompressFile() error: %v", err)
+		return err
+	}
+	if err := gzipWriter.Close(); err != nil {
+		cclog.Errorf("CompressFile() error: %v", err)
+		return err
+	}
+	if err := gzippedFile.Close(); err != nil {
+		cclog.Errorf("CompressFile() error: %v", err)
+		return err
+	}
+	if err := originalFile.Close(); err != nil {
+		cclog.Errorf("CompressFile() error: %v", err)
+		return err
+	}
 	if err := os.Remove(fileIn); err != nil {
 		cclog.Errorf("CompressFile() error: %v", err)
 		return err
@@ -77,6 +92,18 @@ func UncompressFile(fileIn string, fileOut string) error {
 
 	_, err = io.Copy(uncompressedFile, gzipReader)
 	if err != nil {
+		cclog.Errorf("UncompressFile() error: %v", err)
+		return err
+	}
+	if err := gzipReader.Close(); err != nil {
+		cclog.Errorf("UncompressFile() error: %v", err)
+		return err
+	}
+	if err := uncompressedFile.Close(); err != nil {
+		cclog.Errorf("UncompressFile() error: %v", err)
+		return err
+	}
+	if err := gzippedFile.Close(); err != nil {
 		cclog.Errorf("UncompressFile() error: %v", err)
 		return err
 	}
