@@ -215,7 +215,23 @@
                 "minimum": 0
               }
             }
-          }
+          },
+          "patternProperties": {
+            "^[+-]?[0-9]+$": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              }
+            }
+          },
+          "additionalProperties": false
         }
       }
     },

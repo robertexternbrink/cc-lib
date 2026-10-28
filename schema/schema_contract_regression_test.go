@@ -103,3 +103,19 @@ func TestSchemaContract_EachDataSampleHasNumericType(t *testing.T) {
 		t.Fatal("missing-sample control rejected:", err)
 	}
 }
+
+func TestSchemaContract_AdditionalPercentilesHaveTypedValues(t *testing.T) {
+	schema := schemaContractCompile(t, "job-metric-data.schema.json")
+	for _, bad := range []map[string]any{{"37": "wrong"}, {"37": true}, {"unexpected": []any{1, 2, 3}}} {
+		metric := schemaContractMetric()
+		metric["statisticsSeries"] = map[string]any{"percentiles": bad}
+		if err := schema.Validate(schemaContractJSON(t, metric)); err == nil {
+			t.Errorf("invalid percentile map accepted: %#v", bad)
+		}
+	}
+	metric := schemaContractMetric()
+	metric["statisticsSeries"] = map[string]any{"percentiles": map[string]any{"37": []any{1, nil, 3}}}
+	if err := schema.Validate(schemaContractJSON(t, metric)); err != nil {
+		t.Fatal("supported percentile rejected:", err)
+	}
+}
